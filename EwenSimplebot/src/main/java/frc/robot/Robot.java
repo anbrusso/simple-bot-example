@@ -4,9 +4,11 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -15,10 +17,19 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * project.
  */
 public class Robot extends TimedRobot {
-  private static final String kDefaultAuto = "Default";
-  private static final String kCustomAuto = "My Auto";
-  private String m_autoSelected;
-  private final SendableChooser<String> m_chooser = new SendableChooser<>();
+  
+  //TODO: In order to use sparkmax, you'll need the vendor library, See: https://docs.wpilib.org/en/stable/docs/software/vscode-overview/3rd-party-libraries.html for instructions. Brief summary:
+  // 1) Ctrl + Shift + P
+  // 2) type WPILib:Manage Vendor Libraries
+  // 3) Provide the link for the rev robotics library: https://software-metadata.revrobotics.com/REVLib-2023.json
+  private PWMSparkMax m_frontLeftMotor;
+  private PWMSparkMax m_frontRightMotor;
+  private PWMSparkMax m_rearLeftMotor;
+  private PWMSparkMax m_rearRightMotor;
+  private MotorControllerGroup m_leftMotors;
+  private MotorControllerGroup m_rightMotors;
+  private DifferentialDrive m_drivetrain;
+  private Joystick m_joystick;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -26,9 +37,22 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    m_chooser.addOption("My Auto", kCustomAuto);
-    SmartDashboard.putData("Auto choices", m_chooser);
+    //TODO: Go to the Constants file and set these correctly
+    m_frontLeftMotor = new PWMSparkMax(Constants.FRONT_LEFT_MOTOR_ID);
+    m_frontRightMotor = new PWMSparkMax(Constants.FRONT_RIGHT_MOTOR_ID);
+    m_rearLeftMotor = new PWMSparkMax(Constants.REAR_LEFT_MOTOR_ID);
+    m_rearRightMotor = new PWMSparkMax(Constants.REAR_RIGHT_MOTOR_ID);
+    
+    //group motors for left/right control together
+    m_leftMotors = new MotorControllerGroup(m_frontLeftMotor, m_rearLeftMotor);
+    m_rightMotors = new MotorControllerGroup(m_frontRightMotor, m_rearRightMotor);
+    
+    //combine motors into differential drive
+    m_drivetrain = new DifferentialDrive(m_leftMotors,m_rightMotors);
+
+    //TODO: Go to the Constants file and set these correctly. The value for this should
+    // be able to be found in the driver station, See: https://docs.wpilib.org/en/stable/docs/software/basic-programming/joystick.html
+    m_joystick = new Joystick(Constants.JOYSTICK_DEVICE_ID);
   }
 
   /**
@@ -53,23 +77,12 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_autoSelected = m_chooser.getSelected();
-    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
-    System.out.println("Auto selected: " + m_autoSelected);
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    switch (m_autoSelected) {
-      case kCustomAuto:
-        // Put custom auto code here
-        break;
-      case kDefaultAuto:
-      default:
-        // Put default auto code here
-        break;
-    }
+
   }
 
   /** This function is called once when teleop is enabled. */
@@ -78,7 +91,13 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    //Note: If you have two joysticks, you can new them both up and use
+    //tank drive instead. Arcade works with on stick though. See: 
+    //https://docs.wpilib.org/en/stable/docs/software/hardware-apis/motors/wpi-drive-classes.html
+    m_drivetrain.arcadeDrive(m_joystick.getX(), m_joystick.getY());
+
+  }
 
   /** This function is called once when the robot is disabled. */
   @Override
