@@ -90,7 +90,10 @@ public class Robot extends TimedRobot {
     //Note: If you have two joysticks, you can new them both up and use
     //tank drive instead. Arcade works with on stick though. See: 
     //https://docs.wpilib.org/en/stable/docs/software/hardware-apis/motors/wpi-drive-classes.html
-    m_drivetrain.arcadeDrive(m_joystick.getX(), m_joystick.getY());
+    //You also might have to change positive/negative or swap the x and y for this to work correctly
+    //or depending on the joystick its possible you'll have to do getRawAxis or something else to actually
+    //get a joystick input.
+    m_drivetrain.arcadeDrive(-m_joystick.getY(), m_joystick.getX());
 
   }
 
